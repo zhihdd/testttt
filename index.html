@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,49 +9,57 @@
         }
     </style>
     <!-- Include Shaka Player's stylesheet -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.0/controls.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.6/controls.min.css" rel="stylesheet">
 </head>
 <body>
-    <video id="video"
-           width="640"
-           poster="//shaka-player-demo.appspot.com/assets/poster.jpg"
-           controls autoplay></video>
+<div>
+    <label for="licenseUrl">License URL:</label>
+    <input type="text" id="licenseUrl" value="https://license-ap-northeast-1.pr.bcovlive.com/lic/wv?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50IjoiYnJpZ2h0Y292ZV9hbGl2ZS1wci02MTYwOTg3NTg3MDAxLWNiNGY0ODRmODllMjRmYWY5Mzc0ZTdiODA0ZTBlN2ZlIiwicGxheWxpc3QiOiJkZWZhdWx0Iiwib3B0aW9ucyI6W10sImFjY2lkIjoiNjE2MDk4NzU4NzAwMSIsInZpZCI6IjYzMDk5MjQzMzUxMTIiLCJpYXQiOjE2ODU4MTY1MDgsImV4cCI6MTY4NTg1OTcwOCwiaXNzIjoiYWxpdmUiLCJzdWIiOiIxNzc4OTc0NmU5ZTg0NzdkYmNkZjhjZWI5NjkyNmQzYiIsImp0aSI6ImVkMjQ3MmY1NGVmNzgwNmY4Mjc3ODcxNmZlMGVlODc0In0.szJN-gIobyEeI6syELHHQs4OEs2qpiEJKX_T5yXxfBQ">
+</div>
+<div>
+    <label for="m3u8Url">m3u8 URL:</label>
+    <input type="text" id="m3u8Url" value="https://bcovlive-a.akamaihd.net/17789746e9e8477dbcdf8ceb96926d3b/ap-northeast-1/6160987587001/playlist_wv.m3u8">
+</div>
+<video id="video"
+       width="640"
+       poster="//shaka-player-demo.appspot.com/assets/poster.jpg"
+       controls autoplay></video>
 
 <!-- Include Shaka Player's library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.6/shaka-player.compiled.js"></script>
 <script>
+    const licenseUrlInput = document.getElementById('licenseUrl');
+    const m3u8UrlInput = document.getElementById('m3u8Url');
+    const videoElement = document.getElementById('video');
 
-    // const manifestUri =
-    //     'https://storage.googleapis.com/shaka-demo-assets/angel-one/dash.mpd';
-    const manifestUri =
-        'https://bcovlive-a.akamaihd.net/17789746e9e8477dbcdf8ceb96926d3b/ap-northeast-1/6160987587001/playlist_wv.m3u8';
-
-    function initApp() {
+    const initApp = async () => {
         // Install built-in polyfills to patch browser incompatibilities.
         shaka.polyfill.installAll();
 
         // Check to see if the browser supports the basic APIs Shaka needs.
         if (shaka.Player.isBrowserSupported()) {
             // Everything looks good!
-            initPlayer();
+            await initPlayer();
         } else {
             // This browser does not have the minimum set of APIs we need.
             console.error('Browser not supported!');
         }
-    }
+    };
 
-    async function initPlayer() {
+    const initPlayer = async () => {
         // Create a Player instance.
-        const video = document.getElementById('video');
-        const player = new shaka.Player(video);
-player.configure({
-  drm: {
-    servers: {
-      'com.widevine.alpha': 'https://license-ap-northeast-1.pr.bcovlive.com/lic/wv?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50IjoiYnJpZ2h0Y292ZV9hbGl2ZS1wci02MTYwOTg3NTg3MDAxLWNiNGY0ODRmODllMjRmYWY5Mzc0ZTdiODA0ZTBlN2ZlIiwicGxheWxpc3QiOiJkZWZhdWx0Iiwib3B0aW9ucyI6W10sImFjY2lkIjoiNjE2MDk4NzU4NzAwMSIsInZpZCI6IjYzMDk5MjQzMzUxMTIiLCJpYXQiOjE2ODU4MTY1MDgsImV4cCI6MTY4NTg1OTcwOCwiaXNzIjoiYWxpdmUiLCJzdWIiOiIxNzc4OTc0NmU5ZTg0NzdkYmNkZjhjZWI5NjkyNmQzYiIsImp0aSI6ImVkMjQ3MmY1NGVmNzgwNmY4Mjc3ODcxNmZlMGVlODc0In0.szJN-gIobyEeI6syELHHQs4OEs2qpiEJKX_T5yXxfBQ',
-      'com.microsoft.playready': 'PlayReady'
-    }
-  }
-});
+        const player = new shaka.Player(videoElement);
+
+        // Configure DRM settings
+        const drmConfig = {
+            servers: {
+                'com.widevine.alpha': licenseUrlInput.value
+            }
+        };
+        player.configure({
+            drm: drmConfig
+        });
+
         // Attach player to the window to make it easy to access in the JS console.
         window.player = player;
 
@@ -62,27 +69,47 @@ player.configure({
         // Try to load a manifest.
         // This is an asynchronous process.
         try {
-            await player.load(manifestUri);
+            await player.load(m3u8UrlInput.value);
             // This runs if the asynchronous load is successful.
             console.log('The video has now been loaded!');
         } catch (e) {
             // onError is executed if the asynchronous load fails.
             onError(e);
         }
-    }
+    };
 
-    function onErrorEvent(event) {
+    const onErrorEvent = (event) => {
         // Extract the shaka.util.Error object from the event.
         onError(event.detail);
-    }
+    };
 
-    function onError(error) {
+    const onError = (error) => {
         // Log the error.
         console.error('Error code', error.code, 'object', error);
-    }
+    };
 
     document.addEventListener('DOMContentLoaded', initApp);
 
+    licenseUrlInput.addEventListener('input', () => {
+        const licenseUrl = licenseUrlInput.value;
+        if (player && licenseUrl) {
+            const drmConfig = {
+                servers: {
+                    'com.widevine.alpha': licenseUrl
+                }
+            };
+            player.configure({
+                drm: drmConfig
+            });
+        }
+    });
+
+    m3u8UrlInput.addEventListener('input', () => {
+        const m3u8Url = m3u8UrlInput.value;
+        if (player && m3u8Url) {
+            player.load(m3u8Url).catch(onError);
+        }
+    });
 </script>
 </body>
 </html>
