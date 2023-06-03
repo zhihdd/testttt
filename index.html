@@ -13,59 +13,76 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.0/controls.min.css" rel="stylesheet">
 </head>
 <body>
-<video id="video" controls autoplay></video>
+    <video id="video"
+           width="640"
+           poster="//shaka-player-demo.appspot.com/assets/poster.jpg"
+           controls autoplay></video>
 
 <!-- Include Shaka Player's library -->
-<script src="https://unpkg.com/shaka-player/dist/shaka-player.ui.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.1.2/shaka-player.compiled.js"></script>
 <script>
-    // Initialize Shaka Player
-   shaka.polyfill.installAll();
 
-    // Check if the browser supports the necessary features
-    if (shaka.Player.isBrowserSupported()) {
-      // Create a new Shaka Player instance
-      const video = document.getElementById('video');
-      const player = new shaka.Player(video);
+    // const manifestUri =
+    //     'https://storage.googleapis.com/shaka-demo-assets/angel-one/dash.mpd';
+    const manifestUri =
+        'https://bcovlive-a.akamaihd.net/17789746e9e8477dbcdf8ceb96926d3b/ap-northeast-1/6160987587001/playlist_wv.m3u8';
 
-      // Attach error event listener
-      player.addEventListener('error', onErrorEvent);
+    function initApp() {
+        // Install built-in polyfills to patch browser incompatibilities.
+        shaka.polyfill.installAll();
 
-      // Configure the license server URL
-      const licenseUrl = 'https://license-ap-northeast-1.pr.bcovlive.com/lic/wv?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50IjoiYnJpZ2h0Y292ZV9hbGl2ZS1wci02MTYwOTg3NTg3MDAxLWNiNGY0ODRmODllMjRmYWY5Mzc0ZTdiODA0ZTBlN2ZlIiwicGxheWxpc3QiOiJkZWZhdWx0Iiwib3B0aW9ucyI6W10sImFjY2lkIjoiNjE2MDk4NzU4NzAwMSIsInZpZCI6IjYzMDk5MjQzMzUxMTIiLCJpYXQiOjE2ODU4MTQ5MjcsImV4cCI6MTY4NTg1ODEyNywiaXNzIjoiYWxpdmUiLCJzdWIiOiIxNzc4OTc0NmU5ZTg0NzdkYmNkZjhjZWI5NjkyNmQzYiIsImp0aSI6IjZmODExNjg1MTY0MDA3OTRiYmEyZDIyNzc2MGJiZDY3In0.J2PhueRNYBLRT5YMcaxEipaakOPZHfRq4ilsXEUPaxs';
-      const widevineConfig = {
-        drm: {
-          servers: {
-            'com.widevine.alpha': licenseUrl
-          }
+        // Check to see if the browser supports the basic APIs Shaka needs.
+        if (shaka.Player.isBrowserSupported()) {
+            // Everything looks good!
+            initPlayer();
+        } else {
+            // This browser does not have the minimum set of APIs we need.
+            console.error('Browser not supported!');
         }
-      };
-
-      // Load the manifest and play the video
-      const manifestUri = 'https://bcovlive-a.akamaihd.net/17789746e9e8477dbcdf8ceb96926d3b/ap-northeast-1/6160987587001/playlist_wv.m3u8';
-      player.configure({
-        drm: {
-          servers: {
-            'com.widevine.alpha': licenseUrl
-          }
-        }
-      });
-      player.load(manifestUri).then(() => {
-        // Video loaded successfully
-        console.log('Video loaded');
-      }).catch(onError);
-
-      function onErrorEvent(event) {
-        // Handle Shaka Player errors
-        console.error('Error code', event.detail.code, 'object', event.detail);
-      }
-
-      function onError(error) {
-        // Handle general errors
-        console.error('Error', error);
-      }
-    } else {
-      console.error('Browser not supported!');
     }
+
+    async function initPlayer() {
+        // Create a Player instance.
+        const video = document.getElementById('video');
+        const player = new shaka.Player(video);
+player.configure({
+  drm: {
+    servers: {
+      'com.widevine.alpha': 'https://license-ap-northeast-1.pr.bcovlive.com/lic/wv?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50IjoiYnJpZ2h0Y292ZV9hbGl2ZS1wci02MTYwOTg3NTg3MDAxLWNiNGY0ODRmODllMjRmYWY5Mzc0ZTdiODA0ZTBlN2ZlIiwicGxheWxpc3QiOiJkZWZhdWx0Iiwib3B0aW9ucyI6W10sImFjY2lkIjoiNjE2MDk4NzU4NzAwMSIsInZpZCI6IjYzMDk5MjQzMzUxMTIiLCJpYXQiOjE2ODU4MTY1MDgsImV4cCI6MTY4NTg1OTcwOCwiaXNzIjoiYWxpdmUiLCJzdWIiOiIxNzc4OTc0NmU5ZTg0NzdkYmNkZjhjZWI5NjkyNmQzYiIsImp0aSI6ImVkMjQ3MmY1NGVmNzgwNmY4Mjc3ODcxNmZlMGVlODc0In0.szJN-gIobyEeI6syELHHQs4OEs2qpiEJKX_T5yXxfBQ',
+      'com.microsoft.playready': 'PlayReady'
+    }
+  }
+});
+        // Attach player to the window to make it easy to access in the JS console.
+        window.player = player;
+
+        // Listen for error events.
+        player.addEventListener('error', onErrorEvent);
+
+        // Try to load a manifest.
+        // This is an asynchronous process.
+        try {
+            await player.load(manifestUri);
+            // This runs if the asynchronous load is successful.
+            console.log('The video has now been loaded!');
+        } catch (e) {
+            // onError is executed if the asynchronous load fails.
+            onError(e);
+        }
+    }
+
+    function onErrorEvent(event) {
+        // Extract the shaka.util.Error object from the event.
+        onError(event.detail);
+    }
+
+    function onError(error) {
+        // Log the error.
+        console.error('Error code', error.code, 'object', error);
+    }
+
+    document.addEventListener('DOMContentLoaded', initApp);
+
 </script>
 </body>
 </html>
