@@ -1,44 +1,71 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Shaka Player WV Example</title>
+    <title>Shaka Player - Widevine Example</title>
+    <style>
+        video {
+            width: 640px;
+            height: 360px;
+        }
+    </style>
+    <!-- Include Shaka Player's stylesheet -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.0/controls.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.0/shaka-player.ui.min.js"></script>
 </head>
 <body>
-<video id="videoPlayer" width="640" height="360" controls></video>
+<video id="video" controls autoplay></video>
 
+<!-- Include Shaka Player's library -->
+<script src="https://unpkg.com/shaka-player/dist/shaka-player.ui.js"></script>
 <script>
-    async function initPlayer() {
-        const videoElement = document.getElementById('videoPlayer');
+    // Initialize Shaka Player
+   shaka.polyfill.installAll();
 
-        try {
-            await shaka.polyfill.installAll();
-            if (shaka.Player.isBrowserSupported()) {
-                const player = new shaka.Player(videoElement);
-                window.player = player;
+    // Check if the browser supports the necessary features
+    if (shaka.Player.isBrowserSupported()) {
+      // Create a new Shaka Player instance
+      const video = document.getElementById('video');
+      const player = new shaka.Player(video);
 
-                // Widevine DRM configuration
-                player.configure({
-                    drm: {
-                        servers: {
-                            'com.widevine.alpha': 'https://license-ap-northeast-1.pr.bcovlive.com/lic/wv?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50IjoiYnJpZ2h0Y292ZV9hbGl2ZS1wci02MTYwOTg3NTg3MDAxLWNiNGY0ODRmODllMjRmYWY5Mzc0ZTdiODA0ZTBlN2ZlIiwicGxheWxpc3QiOiJkZWZhdWx0Iiwib3B0aW9ucyI6W10sImFjY2lkIjoiNjE2MDk4NzU4NzAwMSIsInZpZCI6IjYzMDk5MjQzMzUxMTIiLCJpYXQiOjE2ODU4MTA0ODUsImV4cCI6MTY4NTg1MzY4NSwiaXNzIjoiYWxpdmUiLCJzdWIiOiIxNzc4OTc0NmU5ZTg0NzdkYmNkZjhjZWI5NjkyNmQzYiIsImp0aSI6IjlhM2RmMzY4MTc2ZmM4ZjFhNmRlZTQzMjMzNTI0Y2EzIn0.26F1gqM-GDUmBV3pJLBBEUqr5WQ8nj9yaTdbkggzTIE'
-                        }
-                    }
-                });
+      // Attach error event listener
+      player.addEventListener('error', onErrorEvent);
 
-                // Load the wv video
-                await player.load('https://bcovlive-a.akamaihd.net/17789746e9e8477dbcdf8ceb96926d3b/ap-northeast-1/6160987587001/playlist_wv.m3u8');
-            } else {
-                console.error('Browser not supported!');
-            }
-        } catch (error) {
-            console.error('Error:', error);
+      // Configure the license server URL
+      const licenseUrl = 'https://license-ap-northeast-1.pr.bcovlive.com/lic/wv?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50IjoiYnJpZ2h0Y292ZV9hbGl2ZS1wci02MTYwOTg3NTg3MDAxLWNiNGY0ODRmODllMjRmYWY5Mzc0ZTdiODA0ZTBlN2ZlIiwicGxheWxpc3QiOiJkZWZhdWx0Iiwib3B0aW9ucyI6W10sImFjY2lkIjoiNjE2MDk4NzU4NzAwMSIsInZpZCI6IjYzMDk5MjQzMzUxMTIiLCJpYXQiOjE2ODU4MTQ5MjcsImV4cCI6MTY4NTg1ODEyNywiaXNzIjoiYWxpdmUiLCJzdWIiOiIxNzc4OTc0NmU5ZTg0NzdkYmNkZjhjZWI5NjkyNmQzYiIsImp0aSI6IjZmODExNjg1MTY0MDA3OTRiYmEyZDIyNzc2MGJiZDY3In0.J2PhueRNYBLRT5YMcaxEipaakOPZHfRq4ilsXEUPaxs';
+      const widevineConfig = {
+        drm: {
+          servers: {
+            'com.widevine.alpha': licenseUrl
+          }
         }
-    }
+      };
 
-    document.addEventListener('DOMContentLoaded', initPlayer);
+      // Load the manifest and play the video
+      const manifestUri = 'https://bcovlive-a.akamaihd.net/17789746e9e8477dbcdf8ceb96926d3b/ap-northeast-1/6160987587001/playlist_wv.m3u8';
+      player.configure({
+        drm: {
+          servers: {
+            'com.widevine.alpha': licenseUrl
+          }
+        }
+      });
+      player.load(manifestUri).then(() => {
+        // Video loaded successfully
+        console.log('Video loaded');
+      }).catch(onError);
+
+      function onErrorEvent(event) {
+        // Handle Shaka Player errors
+        console.error('Error code', event.detail.code, 'object', event.detail);
+      }
+
+      function onError(error) {
+        // Handle general errors
+        console.error('Error', error);
+      }
+    } else {
+      console.error('Browser not supported!');
+    }
 </script>
 </body>
 </html>
