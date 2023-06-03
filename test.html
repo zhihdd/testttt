@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Shaka Player WV Example</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.0/controls.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/3.0.0/shaka-player.ui.min.js"></script>
+</head>
+<body>
+<video id="videoPlayer" width="640" height="360" controls></video>
+
+<script>
+    async function initPlayer() {
+        const videoElement = document.getElementById('videoPlayer');
+
+        try {
+            await shaka.polyfill.installAll();
+            if (shaka.Player.isBrowserSupported()) {
+                const player = new shaka.Player(videoElement);
+                window.player = player;
+
+                // Widevine DRM configuration
+                player.configure({
+                    drm: {
+                        servers: {
+                            'com.widevine.alpha': 'https://license-ap-northeast-1.pr.bcovlive.com/lic/wv?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50IjoiYnJpZ2h0Y292ZV9hbGl2ZS1wci02MTYwOTg3NTg3MDAxLWNiNGY0ODRmODllMjRmYWY5Mzc0ZTdiODA0ZTBlN2ZlIiwicGxheWxpc3QiOiJkZWZhdWx0Iiwib3B0aW9ucyI6W10sImFjY2lkIjoiNjE2MDk4NzU4NzAwMSIsInZpZCI6IjYzMDk5MjQzMzUxMTIiLCJpYXQiOjE2ODU4MTA0ODUsImV4cCI6MTY4NTg1MzY4NSwiaXNzIjoiYWxpdmUiLCJzdWIiOiIxNzc4OTc0NmU5ZTg0NzdkYmNkZjhjZWI5NjkyNmQzYiIsImp0aSI6IjlhM2RmMzY4MTc2ZmM4ZjFhNmRlZTQzMjMzNTI0Y2EzIn0.26F1gqM-GDUmBV3pJLBBEUqr5WQ8nj9yaTdbkggzTIE'
+                        }
+                    }
+                });
+
+                // Load the wv video
+                await player.load('https://bcovlive-a.akamaihd.net/17789746e9e8477dbcdf8ceb96926d3b/ap-northeast-1/6160987587001/playlist_wv.m3u8');
+            } else {
+                console.error('Browser not supported!');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initPlayer);
+</script>
+</body>
+</html>
